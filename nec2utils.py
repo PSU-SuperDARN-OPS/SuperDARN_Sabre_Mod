@@ -84,16 +84,16 @@ class Rotation:
 # =======================================================================================================
 
 class Model:
-	def __init__(self, wireRadius):
+	def __init__(self, wireRadius, ground = 0):
 		''' Prepare the model with the given wire radius
 		'''
 		self.wires      = ""
 		self.transforms = ""
 		self.wireRadius = wireRadius
 		self.tag        = 0
-		self.EX_tag     = 0
-		self.EX_segment = 0
-
+		self.EX_tags     = []
+		self.EX_segments = []
+		self.gpflag = ground
 		self.transformBuffer = ''
 
 	# ---------------------------------------------------------------------------------------------------
@@ -147,11 +147,20 @@ class Model:
 	def ge(self):
 		''' Card to "terminate reading of geometry data cards"
 		'''
-		GPFLAG = 0  # Ground plane flag. 0 means no ground plane present.
+		  # Ground plane flag. 0 means no ground plane present.
 		ge = "GE"
-		ge += dec(GPFLAG) + "\n"
+		ge += dec(self.gpflag) + "\n"
 		return ge
-
+		
+	def gn(self, gtypeflag = 2):
+		''' Card to set the ground type"
+		'''
+		# GN  2  0  0  0  13  .005
+		  # Ground plane flag. 0 means no ground plane present.
+		gn = "GN"
+		gn += dec(gtypeflag) + sci(0) + sci(0) + sci(0) + sci(13) + sci(.005) + "\n"
+		return gn
+		
 	def fr(self, start, stepSize, stepCount):
 		''' Define the frequency range to be modeled
 		'''
@@ -244,13 +253,16 @@ class Model:
 	def feedAtMiddle(self):
 		''' Attach the EX card feedpoint to the middle segment of the element that was most recently created
 		'''
-		self.EX_tag     = self.tag
-		self.EX_segment = self.middle
+		self.EX_tags.append(self.tag)
+		self.EX_segments.append(self.middle)
 
 
 	def getText(self, start, stepSize, stepCount):
 		footer = self.ge()
-		footer += self.ex(tag=self.EX_tag, segment=self.EX_segment)
+		if self.gpflag:
+			footer += self.gn()
+		for (i,tag) in enumerate(self.EX_tags):
+			footer += self.ex(tag=tag, segment=self.EX_segments[i])
 		footer += self.fr(start, stepSize, stepCount)
 		footer += self.rp()
 		footer += self.en()
