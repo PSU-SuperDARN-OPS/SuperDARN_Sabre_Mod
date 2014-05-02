@@ -8,8 +8,11 @@
 import numpy as np
 from nec2utils import *
 
-DUAL_POLARIZATION = 1
-GROUND = 1
+DUAL_POLARIZATION = 1 # set to 1 to add a vertical LPDA
+GROUND = 0 # set to 1 to add an average ground
+POLE = 1
+
+CENTER_POLE = 6 # pole under which there is a post
 
 INCHES_PER_M = 39.3701
 # sabre 608 antenna dimensions, from http://superdarn.gi.alaska.edu/tutorials/SuperDARN_Radar_Fundamentals.pdf
@@ -58,6 +61,7 @@ def nsegs(dist):
 
 pole_radius = inch(.5)
 feed_radius = inch(1./16)
+post_radius = inch(6.)
 # length and spacing increases by approximately .85 per step
 # 
 #  ----x---
@@ -198,7 +202,8 @@ if DUAL_POLARIZATION:
         
         m.setRadius(pole_radius)
         m.addWire(dipole_segs, d0start, d0stop)
-        m.addWire(dipole_segs, d1start, d1stop)
+        if not POLE or (POLE and i != CENTER_POLE):
+            m.addWire(dipole_segs, d1start, d1stop)
         
         m.setRadius(feed_radius)
         
@@ -216,7 +221,31 @@ if DUAL_POLARIZATION:
             m.addWire(feed_segs, f1start, d0start)
 
 	
-# ADD POLE
+# ADD POLE AND BOOM
+if POLE:
+    
+    BOOM_ZOFFSET = -.2
+
+    x = np.cumsum(helem_space)[CENTER_POLE]
+
+    boom_z = antenna_h + BOOM_ZOFFSET
+    m.setRadius(post_radius)
+    post0 = Point(x, 0, 0)
+    post1 = Point(x, 0, boom_z)
+    m.addWire(nsegs(boom_z), post0, post1)
+    
+    # add forward boom
+    m.setRadius(pole_radius)
+    post0 = Point(x, 0, boom_z)
+    post1 = Point(0, 0, boom_z)
+    m.addWire(nsegs(x), post0, post1)
+
+    # add backward boom
+    boomend =  np.cumsum(helem_space)[-1]
+    post0 = Point(x, 0, boom_z)
+    post1 = Point(boomend, 0, boom_z)
+    m.addWire(nsegs(boomend - x), post0, post1)
+
 steps = (20 - 8) / .05
 cardstack = m.getText(start = 8, stepSize = 0.5, stepCount = steps)
 
