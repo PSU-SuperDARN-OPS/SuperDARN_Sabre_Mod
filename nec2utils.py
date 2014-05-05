@@ -93,6 +93,10 @@ class Model:
 		self.tag        = 0
 		self.EX_tags     = []
 		self.EX_segments = []
+		self.LD_tags     = []
+		self.LD_segments = []
+		self.LD_r = []
+		self.LD_l = []
 		self.gpflag = ground
 		self.transformBuffer = ''
 
@@ -158,7 +162,7 @@ class Model:
 		# GN  2  0  0  0  13  .005
 		  # Ground plane flag. 0 means no ground plane present.
 		gn = "GN"
-		gn += dec(gtypeflag) + sci(0) + sci(0) + sci(0) + sci(13) + sci(.005) + "\n"
+		gn += dec(gtypeflag) + dec(0) + dec(0) + dec(0) + sci(13) + sci(.005) + "\n"
 		return gn
 		
 	def fr(self, start, stepSize, stepCount):
@@ -189,6 +193,18 @@ class Model:
 		ex += sci(F1) + sci(F2) + "\n"
 		return ex
 
+        def ld(self, tag, segment, r, l):
+                I1 = 0 # load type, 0 is series RLC
+                I2 = tag
+                I3 = segment
+                I4 = segment
+                F1 = r
+                F2 = l
+                F3 = 0
+                ld = "LD"
+                ld += dec(I1) + dec(I2) + dec(I3) + dec(I4)
+		ld += sci(F1) + sci(F2) + "\n"
+                return ld 
 
 	def rp(self):
 		''' Card to initiate calculation and output of radiation pattern.
@@ -256,13 +272,25 @@ class Model:
 		self.EX_tags.append(self.tag)
 		self.EX_segments.append(self.middle)
 
+	def loadAtMiddle(self, l, r):
+		''' Attach the LD card loading to the middle segment of the element that was most recently created
+		'''
+		self.LD_tags.append(self.tag)
+		self.LD_segments.append(self.middle)
+                self.LD_l.append(l)
+                self.LD_r.append(r)
+
+
 
 	def getText(self, start, stepSize, stepCount):
 		footer = self.ge()
 		if self.gpflag:
 			footer += self.gn()
 		for (i,tag) in enumerate(self.EX_tags):
-			footer += self.ex(tag=tag, segment=self.EX_segments[i])
+		        footer += self.ex(tag=tag, segment=self.EX_segments[i])
+
+                for (i, tag) in enumerate(self.LD_tags):
+                        footer += self.ld(tag=tag, segment=self.LD_segments[i], r = self.LD_r[i], l = self.LD_l[i])
 		footer += self.fr(start, stepSize, stepCount)
 		footer += self.rp()
 		footer += self.en()
