@@ -19,6 +19,8 @@ INCHES_PER_M = 39.3701
 # units in inches..
 helem_space = np.array([0, 28.75, 33.75, 39.625, 46.625, 54.75, 48.5, 59.875, 66.75, 74.09375]) / INCHES_PER_M 
 helem_len = np.array([174.25, 204.75, 241.25, 283.625, 333.6875, 392.125, 467.375, 566.125, 588.3125, 588.3125]) / INCHES_PER_M
+dipole_radius = np.array([.5, .75, .75, .75, 1, 1, 1.25, 1.5, 1.5, 1.5]) / INCHES_PER_M / 2
+feed_coil = np.array([0, 0, 0, 0, 0, 0, 0, 2, 6, 10]) / INCHES_PER_M # inductor coil turns, ~2.2" ODD, 10 AWG wire
 
 antenna_h = 15.24 # meters, heigh of antenna off the ground
 dipole_gap = .40 # meters, gap 
@@ -58,8 +60,7 @@ max_freq = 20e6 # hz
 C = 3e8
 lambda_min = C / max_freq
 
-pole_radius = inch(.5)
-feed_radius = inch(1./8)
+feed_radius = inch(.5)
 post_radius = inch(6.)
 
 def main():
@@ -106,7 +107,7 @@ def make_lpda(filename = 'lpda.nec'):
     # ADD HORIZONTAL DIPOLES AND FEED LINES
     # add horizontal dipole feed lines
     # 
-    #  ----x---
+    #  ----x--_
     #
     #  \ \  \  \ y  
     #   =========
@@ -162,7 +163,7 @@ def make_lpda(filename = 'lpda.nec'):
         d1start = Point(dx, d1y0, dz)
         d1stop  = Point(dx, d1y1, dz)
         
-        m.setRadius(pole_radius)
+        m.setRadius(dipole_radius[i])
         m.addWire(dipole_segs, d0start, d0stop)
         m.addWire(dipole_segs, d1start, d1stop)
         
@@ -172,15 +173,29 @@ def make_lpda(filename = 'lpda.nec'):
 
         # calculate segments for feeder to antenna lines
         # if the element is odd, flip the feed line
+        if feed_coil[i]:
+            pcoil_l = aircoil_inductace(COIL_L, COIL_D, COIL_TURNS)
+            pcoil_r = aircoil_resistance(COIL_D, COIL_TURNS)
+
+
         if i % 2:
             feed_segs = nsegs(f0start.getDist(d0start))
-            m.addWire(feed_segs, f0start, d0start)
-            m.addWire(feed_segs, f1start, d1start)
+            if not feed_coil[i]:
+                m.addWire(feed_segs, f0start, d0start)
+                m.addWire(feed_segs, f1start, d1start)
+            else:
+                m.addWire(feed_segs, f0start, d0start).loadAtMiddle(pcoil_l, pcoil_r)
+                m.addWire(feed_segs, f1start, d1start).loadAtMiddle(pcoil_l, pcoil_r)
+
         else:
             feed_segs = nsegs(f0start.getDist(d1start))
-            m.addWire(feed_segs, f0start, d1start)
-            m.addWire(feed_segs, f1start, d0start)
-       
+            if not feed_coil[i]:
+                m.addWire(feed_segs, f0start, d1start)
+                m.addWire(feed_segs, f1start, d0start)
+            else:
+                m.addWire(feed_segs, f0start, d1start).loadAtMiddle(pcoil_l, pcoil_r)
+                m.addWire(feed_segs, f1start, d0start).loadAtMiddle(pcoil_l, pcoil_r)
+
     # 
     #  ----x---
     #
@@ -241,7 +256,7 @@ def make_lpda(filename = 'lpda.nec'):
             d1start = Point(dx, velem_yoffset, d1z0)
             d1stop  = Point(dx, velem_yoffset, d1z1)
             
-            m.setRadius(pole_radius)
+            m.setRadius(dipole_radius[i])
             m.addWire(dipole_segs, d0start, d0stop)
             if not POLE or (POLE and i != CENTER_POLE):
                 m.addWire(dipole_segs, d1start, d1stop)
@@ -254,6 +269,7 @@ def make_lpda(filename = 'lpda.nec'):
             # if the element is odd, flip the feed line
             if i % 2:
                 feed_segs = nsegs(f0start.getDist(d0start))
+                if not 
                 m.addWire(feed_segs, f0start, d0start)
                 m.addWire(feed_segs, f1start, d1start)
             else:
@@ -277,7 +293,7 @@ def make_lpda(filename = 'lpda.nec'):
         m.addWire(nsegs(boom_z), post0, post1)
         
         # add forward boom
-        m.setRadius(pole_radius)
+        m.setRadius(dipole_radius[i])
         post0 = Point(x, 0, boom_z)
         post1 = Point(0, 0, boom_z)
         m.addWire(nsegs(x), post0, post1)
