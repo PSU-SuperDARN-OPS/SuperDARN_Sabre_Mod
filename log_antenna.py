@@ -11,7 +11,7 @@ from nec2utils import *
 DUAL_POLARIZATION = 1 # set to 1 to add a vertical LPDA
 GROUND = 1 # set to 1 to add an average ground
 POLE = 1 # set to 1 to add a pole and boom approximation
-LOAD = 0 # set to 1 to add a loading coil between the feed lines at the end of the antenna booms
+LOAD = 1 # set to 1 to add a loading coil between the feed lines at the end of the antenna booms
 CENTER_POLE = 6 # pole under which there is a post
 
 INCHES_PER_M = 39.3701
@@ -21,7 +21,7 @@ helem_space = np.array([0, 28.75, 33.75, 39.625, 46.625, 54.75, 48.5, 59.875, 66
 helem_len = np.array([174.25, 204.75, 241.25, 283.625, 333.6875, 392.125, 467.375, 566.125, 588.3125, 588.3125]) / INCHES_PER_M
 # measured parameters..
 dipole_radius = np.array([.5, .75, .75, .75, 1, 1, 1.25, 1.5, 1.5, 1.5]) / INCHES_PER_M / 2
-feed_coil_turns = np.array([0, 0, 0, 0, 0, 0, 0, 2, 6, 10]) / INCHES_PER_M # inductor coil turns, ~2.2" ODD, 10 AWG wire
+feed_coil_turns = np.array([0, 0, 0, 0, 0, 0, 0, 2, 6, 10]) # inductor coil turns, ~2.2" ODD, 10 AWG wire
 feed_coil_d = np.array([0, 0, 0, 0, 0, 0, 0, 1.8, 2, 2]) / INCHES_PER_M # coil diameter 
 feed_coil_l = np.array([0, 0, 0, 0, 0, 0, 0, .5, 1.5, 2.5]) / INCHES_PER_M # inductor coil turns, ~2.2" ODD, 10 AWG wire
 
@@ -42,7 +42,7 @@ velem_xoffset = 0   # meters
 velem_yoffset = .1  # meters
 velem_zoffset = .5  # meters
 
-hfeed_zoffset = .05 # meters
+hfeed_zoffset = .1 # meters
 vfeed_zoffset = .50 # meters
 
 hfeed_xoffset = .05 # meters
@@ -58,7 +58,7 @@ COIL_L = .1
 COIL_D = 12.7
 COIL_TURNS = 9
 
-segments_per_lambda = 300   
+segments_per_lambda = 80   
 max_freq = 20e6 # hz
 C = 3e8
 lambda_min = C / max_freq
@@ -72,8 +72,6 @@ def main():
 
     DUAL_POLARIZATION = 1
     make_lpda(filename = 'lpda_dualpol.nec', usepole = 1, dualpol = 1)
-
-    POLE = 0
     make_lpda(filename = 'lpda_dualpol_nopole.nec', usepole = 0, dualpol = 1)
 
 
@@ -95,9 +93,6 @@ def nsegs(dist):
 
 # create and save a LPDA antenna
 def make_lpda(filename = 'lpda.nec', usepole = POLE, dualpol = DUAL_POLARIZATION):
-    print GROUND
-    print DUAL_POLARIZATION
-    print POLE
     comments  = 'CM ---------------------------------------------------\n'
     comments += 'CM NEC model for sabre 608 log periodic antenna\n'
     comments += 'CM jon klein, jtklein@alaska.edu\n'
@@ -161,7 +156,7 @@ def make_lpda(filename = 'lpda.nec', usepole = POLE, dualpol = DUAL_POLARIZATION
 
         d0y0 = helem_yoffset + dipole_gap / 2.
         d1y0 = helem_yoffset - dipole_gap / 2.
-        
+        x
         d0y1 = d0y0 + helem_len[i] / 2. - dipole_gap / 2.
         d1y1 = d1y0 - helem_len[i] / 2. + dipole_gap / 2.
 

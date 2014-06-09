@@ -203,7 +203,7 @@ class Model:
                 F3 = 0
                 ld = "LD"
                 ld += dec(I1) + dec(I2) + dec(I3) + dec(I4)
-		ld += sci(F1) + sci(F2) + "\n"
+                ld += sci(F1) + sci(F2) + "\n"
                 return ld 
 
 	def rp(self):
