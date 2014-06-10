@@ -23,7 +23,8 @@ def sci(f):
 def dec(i):
 	''' Return formatted string containing a decimal integer in a 6 char wide field (tags, segments)
 	'''
-	return '{: >6d}'.format(math.trunc(i))
+    return ' ' + str(math.trunc(i))
+	#return '{: >6d}'.format(math.trunc(i))
 
 
 # =======================================================================================================
