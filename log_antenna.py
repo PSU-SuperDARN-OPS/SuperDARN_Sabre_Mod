@@ -19,6 +19,7 @@ LOAD = 1 # set to 1 to add a loading coil between the feed lines at the end of t
 CENTER_POLE = 6 # pole under which there is a post
 WIPE_4NECDATA = True
 INCHES_PER_M = 39.3701
+FREQ_STEP = .5 # MHz
 # sabre 608 antenna dimensions, from http://superdarn.gi.alaska.edu/tutorials/SuperDARN_Radar_Fundamentals.pdf
 # units in inches..
 helem_space = np.array([0, 28.75, 33.75, 39.625, 46.625, 54.75, 48.5, 59.875, 66.75, 74.09375]) / INCHES_PER_M 
@@ -78,11 +79,6 @@ def main():
     vdipole_radius = np.array([.1, .1, .1, .1, .1, .1, .1, .1, .1, .1]) / INCHES_PER_M / 2
     make_lpda(filename = 'lpda_dualpol_wirevert.nec', usepole = 0, dualpol = 1, hfeed = False)
     make_lpda(filename = 'lpda_dualpol_wirehoriz.nec', usepole = 0, dualpol = 1, vfeed = False)
-    
-    # 4nec has trouble opening files with cached output data?
-    # try removing 
-    if WIPE_4NECDATA:
-        filelist = [ f for f in os.listdir("C:\4nec2\out")]
 
 def aircoil_inductace(l, d, turns):
     # l - length (meters)
@@ -325,7 +321,7 @@ def make_lpda(filename = 'lpda.nec', usepole = POLE, dualpol = DUAL_POLARIZATION
         post1 = Point(boomend, 0, boom_z)
         m.addWire(nsegs(boomend - x), post0, post1)
 
-    steps = (20 - 8) / .05
+    steps = ((20 - 8) / FREQ_STEP) + 1
     cardstack = m.getText(start = 8, stepSize = 0.5, stepCount = steps)
 
     writeCardsToFile(filename, comments, cardstack)

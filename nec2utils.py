@@ -8,16 +8,16 @@ Trivial modifications by Jon Klein (jtklein@alaska.edu)
 '''
 
 import math
-
+import decimal
 
 # =======================================================================================================
 # Field formatting functions (i.e. "columns" in punchcard-speak)
 # =======================================================================================================
 
 def sci(f):
-	''' Return formatted string containinga scientific notaion float in a 13 char wide field (xyz coordiates, radius)
-	'''
-	return '{: > 13.5E}'.format(f)
+    ''' Return formatted string containinga scientific notaion float in a 13 char wide field (xyz coordiates, radius)
+	'''#return '{: > 13.5E}'.format(f)
+    return ' ' +  str(round(decimal.Decimal(f),5))
 
 
 def dec(i):
@@ -211,12 +211,12 @@ class Model:
 		'''
 		I1  = 0      # 0 is normal mode: defaults to free-space unless a previous GN card specified a ground plane
 		NTH = 37     # Number of values of theta (angle away from positive Z axis)
-		NPH = 37     # Number of values of phi (angle away from X axis in the XY plane)
-		I4  = 0      # Use defaults for some misc output printing options
-		THETS = 0.0  # Theta start value in degrees
+		NPH = 73     # Number of values of phi (angle away from X axis in the XY plane)
+		I4  = 1000   # Use defaults for some misc output printing options
+		THETS = -90  # Theta start value in degrees
 		PHIS  = 0.0  # Phi start value in degrees
-		DTH   = 10.0 # Delta-theta in degrees
-		DPH   = 10.0 # Delta-phi in degrees
+		DTH   = 5.0 # Delta-theta in degrees
+		DPH   = 5.0 # Delta-phi in degrees
 		rp = "RP"
 		rp += dec(I1) + dec(NTH) + dec(NPH) + dec(I4)
 		rp += sci(THETS) + sci(PHIS) + sci(DTH) + sci(DPH) + "\n"
