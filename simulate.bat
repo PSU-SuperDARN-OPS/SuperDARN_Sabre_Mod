@@ -1,1 +1,0 @@
-C:\4nec2\exe\nec2dxs11k .\lpda_dualpol_wirevert.nec .\out\lpda_dualpol_wirevert.out

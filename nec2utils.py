@@ -16,14 +16,14 @@ import decimal
 
 def sci(f):
     ''' Return formatted string containinga scientific notaion float in a 13 char wide field (xyz coordiates, radius)
-	'''#return '{: > 13.5E}'.format(f)
+	'''
     return ' ' +  str(round(decimal.Decimal(f),5))
 
 
 def dec(i):
 	''' Return formatted string containing a decimal integer in a 6 char wide field (tags, segments)
 	'''
-	return '{: >6d}'.format(math.trunc(i))
+    return ' ' + str(math.trunc(i))
 
 
 # =======================================================================================================

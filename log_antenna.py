@@ -6,9 +6,7 @@
 # works okay with 4nec2
 # auto segmentation with 320 segments/wavelength, and stepped radius correction seem to work well
 # set characteristic impedance to 100 ohms
-# TODO:
-# see C:\4nec2\*.inp, generate full segmented file with freq sweep without using 4nec2
-# automate command line nec2 tools, view results in 4nec2?
+
 import numpy as np
 from nec2utils import *
 
@@ -17,7 +15,6 @@ GROUND = 1 # set to 1 to add an average ground
 POLE = 1 # set to 1 to add a pole and boom approximation
 LOAD = 1 # set to 1 to add a loading coil between the feed lines at the end of the antenna booms
 CENTER_POLE = 6 # pole under which there is a post
-WIPE_4NECDATA = True
 INCHES_PER_M = 39.3701
 FREQ_STEP = .5 # MHz
 # sabre 608 antenna dimensions, from http://superdarn.gi.alaska.edu/tutorials/SuperDARN_Radar_Fundamentals.pdf
@@ -73,6 +70,7 @@ lambda_min = C / max_freq
 feed_radius = inch(.5)
 post_radius = inch(6.)
 boom_radius = inch(1)
+
 def main():
     make_lpda(filename = 'lpda_dualpol_vert.nec', usepole = 0, dualpol = 1, hfeed = False)
     make_lpda(filename = 'lpda_dualpol_horiz.nec', usepole = 0, dualpol = 1, vfeed = False)   
@@ -321,7 +319,7 @@ def make_lpda(filename = 'lpda.nec', usepole = POLE, dualpol = DUAL_POLARIZATION
         post1 = Point(boomend, 0, boom_z)
         m.addWire(nsegs(boomend - x), post0, post1)
 
-    steps = ((20 - 8) / FREQ_STEP) + 1
+    steps = ((18 - 8) / FREQ_STEP) + 1
     cardstack = m.getText(start = 8, stepSize = 0.5, stepCount = steps)
 
     writeCardsToFile(filename, comments, cardstack)
