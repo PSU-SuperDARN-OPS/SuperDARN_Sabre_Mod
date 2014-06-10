@@ -74,11 +74,16 @@ post_radius = inch(6.)
 boom_radius = inch(1)
 
 def main():
-    make_lpda(filename = 'lpda_dualpol_vert.nec', usepole = 0, dualpol = 1, hfeed = False)
-    make_lpda(filename = 'lpda_dualpol_horiz.nec', usepole = 0, dualpol = 1, vfeed = False)   
+    make_lpda(filename = 'lpda_existing_sabre.nec', usepole = 1, dualpol = 0)
+    make_lpda(filename = 'lpda_dualpol_vert.nec', usepole = 1, dualpol = 1, hfeed = False)
+    make_lpda(filename = 'lpda_dualpol_horiz.nec', usepole = 1, dualpol = 1, vfeed = False)  
+    GROUND = 0
+    make_lpda(filename = 'lpda_dualpol_vert_noground.nec', usepole = 1, dualpol = 1, hfeed = False)
+    make_lpda(filename = 'lpda_dualpol_horiz_noground.nec', usepole = 1, dualpol = 1, vfeed = False)
+    GROUND = 1    
     vdipole_radius = np.array([.1, .1, .1, .1, .1, .1, .1, .1, .1, .1]) / INCHES_PER_M / 2
-    make_lpda(filename = 'lpda_dualpol_wirevert.nec', usepole = 0, dualpol = 1, hfeed = False)
-    make_lpda(filename = 'lpda_dualpol_wirehoriz.nec', usepole = 0, dualpol = 1, vfeed = False)
+    make_lpda(filename = 'lpda_dualpol_wirevert.nec', usepole = 1, dualpol = 1, hfeed = False)
+    make_lpda(filename = 'lpda_dualpol_wirehoriz.nec', usepole = 1, dualpol = 1, vfeed = False)
 
 def aircoil_inductace(l, d, turns):
     # l - length (meters)
