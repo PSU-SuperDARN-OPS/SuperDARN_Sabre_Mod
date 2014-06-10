@@ -17,7 +17,7 @@ import decimal
 def sci(f):
         ''' Return formatted string containinga scientific notaion float in a 13 char wide field (xyz coordiates, radius)
         '''
-        return ' ' +  str(round(decimal.Decimal(f),5))
+        return ' %s' % float('%.6g' % f)
 
 
 def dec(i):
