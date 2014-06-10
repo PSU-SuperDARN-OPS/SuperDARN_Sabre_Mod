@@ -4,7 +4,11 @@
 # see http://www.antennex.com/w4rnl/col0100/amod23.htm for notes on LPDA modeling with NEC
 # 
 # works okay with 4nec2
-
+# auto segmentation with 320 segments/wavelength, and stepped radius correction seem to work well
+# set characteristic impedance to 100 ohms
+# TODO:
+# see C:\4nec2\*.inp, generate full segmented file with freq sweep without using 4nec2
+# automate command line nec2 tools, view results in 4nec2?
 import numpy as np
 from nec2utils import *
 
@@ -13,7 +17,7 @@ GROUND = 1 # set to 1 to add an average ground
 POLE = 1 # set to 1 to add a pole and boom approximation
 LOAD = 1 # set to 1 to add a loading coil between the feed lines at the end of the antenna booms
 CENTER_POLE = 6 # pole under which there is a post
-
+WIPE_4NECDATA = True
 INCHES_PER_M = 39.3701
 # sabre 608 antenna dimensions, from http://superdarn.gi.alaska.edu/tutorials/SuperDARN_Radar_Fundamentals.pdf
 # units in inches..
@@ -21,6 +25,8 @@ helem_space = np.array([0, 28.75, 33.75, 39.625, 46.625, 54.75, 48.5, 59.875, 66
 helem_len = np.array([174.25, 204.75, 241.25, 283.625, 333.6875, 392.125, 467.375, 566.125, 588.3125, 588.3125]) / INCHES_PER_M
 # measured parameters..
 dipole_radius = np.array([.5, .75, .75, .75, 1, 1, 1.25, 1.5, 1.5, 1.5]) / INCHES_PER_M / 2
+vdipole_radius = np.array([.75, .75, .75, .75, 1, 1, 1, 1, 1, 1]) / INCHES_PER_M / 2
+
 feed_coil_turns = np.array([0, 0, 0, 0, 0, 0, 0, 2, 6, 10]) # inductor coil turns, ~2.2" ODD, 10 AWG wire
 feed_coil_d = np.array([0, 0, 0, 0, 0, 0, 0, 1.8, 2, 2]) / INCHES_PER_M # coil diameter 
 feed_coil_l = np.array([0, 0, 0, 0, 0, 0, 0, .5, 1.5, 2.5]) / INCHES_PER_M # inductor coil turns, ~2.2" ODD, 10 AWG wire
@@ -58,7 +64,7 @@ COIL_L = .1
 COIL_D = 12.7
 COIL_TURNS = 9
 
-segments_per_lambda = 80   
+segments_per_lambda = 320   
 max_freq = 20e6 # hz
 C = 3e8
 lambda_min = C / max_freq
@@ -67,13 +73,16 @@ feed_radius = inch(.5)
 post_radius = inch(6.)
 boom_radius = inch(1)
 def main():
-    make_lpda(filename = 'lpda_horizonly.nec', usepole = 1, dualpol = 0)
-    make_lpda(filename = 'lpda_horizonly_nopole.nec', usepole = 0, dualpol = 0)
-
-    DUAL_POLARIZATION = 1
-    make_lpda(filename = 'lpda_dualpol.nec', usepole = 1, dualpol = 1)
-    make_lpda(filename = 'lpda_dualpol_nopole.nec', usepole = 0, dualpol = 1)
-
+    make_lpda(filename = 'lpda_dualpol_vert.nec', usepole = 0, dualpol = 1, hfeed = False)
+    make_lpda(filename = 'lpda_dualpol_horiz.nec', usepole = 0, dualpol = 1, vfeed = False)   
+    vdipole_radius = np.array([.1, .1, .1, .1, .1, .1, .1, .1, .1, .1]) / INCHES_PER_M / 2
+    make_lpda(filename = 'lpda_dualpol_wirevert.nec', usepole = 0, dualpol = 1, hfeed = False)
+    make_lpda(filename = 'lpda_dualpol_wirehoriz.nec', usepole = 0, dualpol = 1, vfeed = False)
+    
+    # 4nec has trouble opening files with cached output data?
+    # try removing 
+    if WIPE_4NECDATA:
+        filelist = [ f for f in os.listdir("C:\4nec2\out")]
 
 def aircoil_inductace(l, d, turns):
     # l - length (meters)
@@ -92,7 +101,7 @@ def nsegs(dist):
     return max(1, segments_per_lambda * (dist / lambda_min))
 
 # create and save a LPDA antenna
-def make_lpda(filename = 'lpda.nec', usepole = POLE, dualpol = DUAL_POLARIZATION):
+def make_lpda(filename = 'lpda.nec', usepole = POLE, dualpol = DUAL_POLARIZATION, vfeed = True, hfeed = True, term_r = 120):
     comments  = 'CM ---------------------------------------------------\n'
     comments += 'CM NEC model for sabre 608 log periodic antenna\n'
     comments += 'CM jon klein, jtklein@alaska.edu\n'
@@ -133,7 +142,7 @@ def make_lpda(filename = 'lpda.nec', usepole = POLE, dualpol = DUAL_POLARIZATION
         if i < len(helem_len) - 1:
             f0stop = Point(x + helem_space[i+1] + hfeedline_xgap/2 + hdipole_xoffset, f0_hfeed_y, hfeed_z)
             f1stop = Point(x + helem_space[i+1] - hfeedline_xgap/2 + hdipole_xoffset, f1_hfeed_y, hfeed_z)
-            feed_segs = nsegs(helem_space[i])
+            feed_segs = nsegs(helem_space[i+1])
             m.addWire(feed_segs, f0start, f0stop)
             m.addWire(feed_segs, f1start, f1stop)
         
@@ -144,9 +153,12 @@ def make_lpda(filename = 'lpda.nec', usepole = POLE, dualpol = DUAL_POLARIZATION
      
         # add excitation point if this is the first element
         if i == 0:
-            feed_segs = nsegs(hfeedline_ygap)
-            m.addWire(feed_segs, f0start, f1start).feedAtMiddle()
-
+            if hfeed:
+                feed_segs = nsegs(hfeedline_ygap)
+                m.addWire(feed_segs, f0start, f1start).feedAtMiddle()
+            else:
+                m.addWire(feed_segs, f0start, f1start).loadAtMiddle(0, term_r)
+        
 
         # add dipoles 
         dipole_segs = nsegs(helem_len[i]/2)
@@ -156,7 +168,7 @@ def make_lpda(filename = 'lpda.nec', usepole = POLE, dualpol = DUAL_POLARIZATION
 
         d0y0 = helem_yoffset + dipole_gap / 2.
         d1y0 = helem_yoffset - dipole_gap / 2.
-        x
+        
         d0y1 = d0y0 + helem_len[i] / 2. - dipole_gap / 2.
         d1y1 = d1y0 - helem_len[i] / 2. + dipole_gap / 2.
 
@@ -222,14 +234,17 @@ def make_lpda(filename = 'lpda.nec', usepole = POLE, dualpol = DUAL_POLARIZATION
             if i < len(helem_len) - 1:
                 f0stop = Point(x + helem_space[i+1] + vfeedline_xgap/2 + vdipole_xoffset, f0_vfeed_y, vfeed_z)
                 f1stop = Point(x + helem_space[i+1] - vfeedline_xgap/2 + vdipole_xoffset, f1_vfeed_y, vfeed_z)
-                feed_segs = nsegs(helem_space[i])
+                feed_segs = nsegs(helem_space[i+1])
                 m.addWire(feed_segs, f0start, f0stop)
                 m.addWire(feed_segs, f1start, f1stop)
                 
             # add excitation point if this is the first element
             if i == 0:
-                feed_segs = nsegs(hfeedline_ygap)
-                m.addWire(feed_segs, f0start, f1start).feedAtMiddle()
+                if vfeed:
+                    feed_segs = nsegs(hfeedline_ygap)
+                    m.addWire(feed_segs, f0start, f1start).feedAtMiddle()
+                else:
+                    m.addWire(feed_segs, f0start, f1start).loadAtMiddle(0, term_r)
 
             # add loading coil at end of feed line
             if LOAD and i == len(helem_len - 2):
@@ -253,7 +268,7 @@ def make_lpda(filename = 'lpda.nec', usepole = POLE, dualpol = DUAL_POLARIZATION
             d1start = Point(dx, velem_yoffset, d1z0)
             d1stop  = Point(dx, velem_yoffset, d1z1)
             
-            m.setRadius(dipole_radius[i])
+            m.setRadius(vdipole_radius[i])
             m.addWire(dipole_segs, d0start, d0stop)
             if not usepole or (usepole and i != CENTER_POLE):
                 m.addWire(dipole_segs, d1start, d1stop)
