@@ -15,15 +15,15 @@ import decimal
 # =======================================================================================================
 
 def sci(f):
-    ''' Return formatted string containinga scientific notaion float in a 13 char wide field (xyz coordiates, radius)
-	'''
-    return ' ' +  str(round(decimal.Decimal(f),5))
+        ''' Return formatted string containinga scientific notaion float in a 13 char wide field (xyz coordiates, radius)
+        '''
+        return ' ' +  str(round(decimal.Decimal(f),5))
 
 
 def dec(i):
 	''' Return formatted string containing a decimal integer in a 6 char wide field (tags, segments)
 	'''
-    return ' ' + str(math.trunc(i))
+        return ' ' + str(math.trunc(i))
 
 
 # =======================================================================================================
@@ -206,7 +206,7 @@ class Model:
                 ld += sci(F1) + sci(F2) + "\n"
                 return ld 
 
-	def rp(self):
+	def rp(self, NTH = 37, NPH = 73):
 		''' Card to initiate calculation and output of radiation pattern.
 		'''
 		I1  = 0      # 0 is normal mode: defaults to free-space unless a previous GN card specified a ground plane
@@ -282,7 +282,7 @@ class Model:
 
 
 
-	def getText(self, start, stepSize, stepCount):
+	def getText(self, start, stepSize, stepCount, radpat = True):
 		footer = self.ge()
 		if self.gpflag:
 			footer += self.gn()
@@ -292,7 +292,11 @@ class Model:
                 for (i, tag) in enumerate(self.LD_tags):
                         footer += self.ld(tag=tag, segment=self.LD_segments[i], r = self.LD_r[i], l = self.LD_l[i])
 		footer += self.fr(start, stepSize, stepCount)
-		footer += self.rp()
+                if radpat:
+		        footer += self.rp()
+                else:
+                        footer += self.rp(NTH = 3, NPH = 3)
+
 		footer += self.en()
 		return self.wires + self.transforms + footer
 

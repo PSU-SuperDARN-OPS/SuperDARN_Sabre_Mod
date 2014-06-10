@@ -320,7 +320,7 @@ def make_lpda(filename = 'lpda.nec', usepole = POLE, dualpol = DUAL_POLARIZATION
         m.addWire(nsegs(boomend - x), post0, post1)
 
     steps = ((18 - 8) / FREQ_STEP) + 1
-    cardstack = m.getText(start = 8, stepSize = 0.5, stepCount = steps)
+    cardstack = m.getText(start = 8, stepSize = 0.5, stepCount = steps, radpat = False)
 
     writeCardsToFile(filename, comments, cardstack)
 
