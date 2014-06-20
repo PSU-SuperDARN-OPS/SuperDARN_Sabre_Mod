@@ -19,7 +19,7 @@ LOAD = 1 # set to 1 to add a loading coil between the feed lines at the end of t
 CENTER_POLE = 6 # pole under which there is a post
 INCHES_PER_M = 39.3701
 FREQ_STEP = 1 # MHz
-POLE_CENTER = False# stick a dipole near the center post anyways..
+POLE_CENTER = True# stick a dipole near the center post anyways..
 # sabre 608 antenna dimensions, from http://superdarn.gi.alaska.edu/tutorials/SuperDARN_Radar_Fundamentals.pdf
 # units in inches..
 helem_space = np.array([0, 28.75, 33.75, 39.625, 46.625, 54.75, 48.5, 59.875, 66.75, 74.09375]) / INCHES_PER_M 
@@ -75,16 +75,17 @@ post_radius = inch(6.)
 boom_radius = inch(1)
 
 def main():
-    make_lpda(filename = 'lpda_existing_sabre.nec', usepole = 0, dualpol = 0)
-    make_lpda(filename = 'lpda_dualpol_vert.nec', usepole = 0, dualpol = 1, hfeed = False)
-    make_lpda(filename = 'lpda_dualpol_horiz.nec', usepole = 0, dualpol = 1, vfeed = False)  
-#    GROUND = 0
-#    make_lpda(filename = 'lpda_dualpol_vert_noground.nec', usepole = 1, dualpol = 1, hfeed = False)
-#    make_lpda(filename = 'lpda_dualpol_horiz_noground.nec', usepole = 1, dualpol = 1, vfeed = False)
+    GROUND = 1
+    make_lpda(filename = 'lpda_existing_sabre.nec', usepole = 1, dualpol = 0)
+    make_lpda(filename = 'lpda_dualpol_vert.nec', usepole = 1, dualpol = 1, hfeed = False)
+    make_lpda(filename = 'lpda_dualpol_horiz.nec', usepole = 1, dualpol = 1, vfeed = False)  
+    GROUND = 0
+    make_lpda(filename = 'lpda_dualpol_vert_noground.nec', usepole = 0, dualpol = 1, hfeed = False)
+    make_lpda(filename = 'lpda_dualpol_horiz_noground.nec', usepole = 0, dualpol = 1, vfeed = False)
     GROUND = 1    
-    vdipole_radius = np.array([.1, .1, .1, .1, .1, .1, .1, .1, .1, .1]) / INCHES_PER_M / 2
-    make_lpda(filename = 'lpda_dualpol_wirevert.nec', usepole = 0, dualpol = 1, hfeed = False)
-    make_lpda(filename = 'lpda_dualpol_wirehoriz.nec', usepole = 0, dualpol = 1, vfeed = False)
+    vdipole_radius[:] =.1 / INCHES_PER_M / 2
+    make_lpda(filename = 'lpda_dualpol_wirevert.nec', usepole = 1, dualpol = 1, hfeed = False)
+    make_lpda(filename = 'lpda_dualpol_wirehoriz.nec', usepole = 1, dualpol = 1, vfeed = False)
 
 def aircoil_inductace(l, d, turns):
     # l - length (meters)
@@ -109,7 +110,7 @@ def make_lpda(filename = 'lpda.nec', usepole = POLE, dualpol = DUAL_POLARIZATION
     comments += 'CM jon klein, jtklein@alaska.edu\n'
     comments += 'CM ---------------------------------------------------\n'
     comments += 'CE\n'
-
+    print vdipole_radius
     m = Model(feed_radius, GROUND)
 
     coil_l = aircoil_inductace(COIL_L, COIL_D, COIL_TURNS)
@@ -271,9 +272,8 @@ def make_lpda(filename = 'lpda.nec', usepole = POLE, dualpol = DUAL_POLARIZATION
             d1stop  = Point(dx, velem_yoffset, d1z1)
             
             m.setRadius(vdipole_radius[i])
-
             m.addWire(dipole_segs, d0start, d0stop)
-            if not usepole or (usepole and i != CENTER_POLE):
+            if not usepole or (usepole and i != CENTER_POLE) or POLE_CENTER:
                 m.addWire(dipole_segs, d1start, d1stop)
             
             m.setRadius(feed_radius)
