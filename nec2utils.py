@@ -240,6 +240,19 @@ class Model:
 		self.flushTransformBuffer()
 		self.middle = math.trunc(segments/2) + 1
 		return self
+        
+	def addWireAutoseg(self, dseg, pt1, pt2):
+		''' Append a wire, increment the tag number, and return this object to facilitate a chained attachToEX() call
+                        Wire length calculated using segment distance
+		'''
+                dwire = math.sqrt((pt1.x - pt2.x)**2 + (pt1.y - pt2.y) ** 2 + (pt1.z - pt2.z) ** 2)
+                segments = math.ceil(dwire / dseg)
+		self.tag += 1
+		self.wires += self.gw(self.tag, segments, pt1.x, pt1.y, pt1.z, pt2.x, pt2.y, pt2.z, self.wireRadius)
+		self.flushTransformBuffer()
+		self.middle = math.trunc(segments/2) + 1
+		return self
+
 
 	def addArc(self, segments, radius, start, end, rotate, translate):
 		''' Append an arc using a combination of a GA card (radius, start angle, end angle), a GM card to rotate
