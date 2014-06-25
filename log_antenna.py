@@ -39,14 +39,22 @@ dseg = lambda_min / 700
 
 def main():
     horiz = lpda_antenna(0, xoffset = .1, yoffset = 0, zoffset = 0 , feed_zoffset = .1)
-    vert = lpda_antenna(90, xoffset = 0, yoffset = .1, zoffset = .5, feed_zoffset = .5)
-   
+    vert = lpda_antenna(90, xoffset = 0, yoffset = .1, zoffset = .5, feed_zoffset = .6)
+    rdiag = lpda_antenna(45, xoffset = .1, yoffset = 0, zoffset = 0 , feed_zoffset = .1, feedangle = 0)
+    ldiag = lpda_antenna(135, xoffset = 0, yoffset = .1, zoffset = .5, feed_zoffset = .6, feedangle = 0)
+    ldiag90 = lpda_antenna(135, xoffset = 0, yoffset = .1, zoffset = .5, feed_zoffset = .6, feedangle = 90)
     make_lpda_nec('lpda_horiz.nec', [horiz], usepole = False, ground = False)
+    make_lpda_nec('lpda_rdiag.nec', [rdiag], usepole = False, ground = False)
+    make_lpda_nec('lpda_ldiag.nec', [ldiag], usepole = False, ground = False)
     make_lpda_nec('lpda_vert.nec', [vert], usepole = False, ground = False)
     make_lpda_nec('lpda_horiz_ground.nec', [horiz], usepole = False, ground = True)
     make_lpda_nec('lpda_vert_ground.nec', [vert], usepole = False, ground = True)
     make_lpda_nec('lpda_horiz_groundpole.nec', [horiz], usepole = True, ground = True)
     make_lpda_nec('lpda_vert_groundpole.nec', [vert], usepole = True, ground = True)
+    make_lpda_nec('lpda_diag_dualpol.nec', [ldiag, rdiag], usepole = False, ground = False)
+    make_lpda_nec('lpda_diag_dualpol90.nec', [ldiag90, rdiag], usepole = False, ground = False)
+    make_lpda_nec('lpda_diag_dualpol_ground.nec', [ldiag, rdiag], usepole = False, ground = True)
+    make_lpda_nec('lpda_diag_dualpol_groundpole.nec', [ldiag, rdiag], usepole = True, ground = True)
     
 def aircoil_inductace(l, d, turns):
     # l - length (meters)
@@ -66,8 +74,9 @@ def build_lpda(m, antenna, feed = True):
     coil_l, coil_r = antenna.get_endcoil()
     n_elems = antenna.get_nelements()
     feed_radius = antenna.get_feedr()
-
+    
     for i in range(n_elems):
+        m.setRadius(feed_radius)
         f0start, f1start = antenna.get_fstart(i)
         
         if i < n_elems - 1:
@@ -81,7 +90,7 @@ def build_lpda(m, antenna, feed = True):
         # add excitation point if this is the first element, or terminate
         if i == 0:
             if feed:
-                m.addWireAutoseg(dseg, f0start, f1start).feedAtMiddle()
+                m.addWireAutoseg(dseg, f0start, f1start).feedAtMiddle(antenna.get_feedangle())
             else:
                 m.addWireAutoseg(dseg, feed_segs, f0start, f1start).loadAtMiddle(0, antenna.get_termz())
         
@@ -118,7 +127,7 @@ def build_lpda(m, antenna, feed = True):
 
 
 class lpda_antenna:
-    def __init__(self, angle, xoffset, yoffset, zoffset, feed_zoffset):
+    def __init__(self, angle, xoffset, yoffset, zoffset, feed_zoffset, feedangle = 0):
         # dipole information
         self.elem_len = np.array([174.25, 204.75, 241.25, 283.625, 333.6875, 392.125, 467.375, 566.125, 588.3125, 588.3125]) / INCHES_PER_M
         self.elem_space = np.array([0, 28.75, 33.75, 39.625, 46.625, 54.75, 48.5, 59.875, 66.75, 74.09375]) / INCHES_PER_M 
@@ -126,7 +135,8 @@ class lpda_antenna:
 
         self.antenna_h = 15.24
         self.dipole_gap = .4
-
+        self.feedangle = feedangle
+        
         self.dipole_xoffset = xoffset 
         self.dipole_yoffset = yoffset
         self.dipole_zoffset = zoffset
@@ -138,7 +148,7 @@ class lpda_antenna:
         self.feedline_xgap = .03
         self.feedline_ygap = .06
     
-        self.feed_yoffset = -.05
+        self.feed_yoffset = yoffset - .05
 
         self.feed0_y = self.feed_yoffset + self.feedline_ygap / 2.
         self.feed1_y = self.feed_yoffset - self.feedline_ygap / 2.
@@ -164,7 +174,10 @@ class lpda_antenna:
         f0stop = Point(x + self.elem_space[i+1] + self.feedline_xgap/2 + self.dipole_xoffset, self.feed0_y, self.feed_z)
         f1stop = Point(x + self.elem_space[i+1] - self.feedline_xgap/2 + self.dipole_xoffset, self.feed1_y, self.feed_z)
         return f0stop, f1stop 
-
+        
+    def get_feedangle(self):
+        return self.feedangle
+        
     def get_dipoles(self, i):
         x = np.cumsum(self.elem_space)[i]
 
